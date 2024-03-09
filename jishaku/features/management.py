@@ -34,48 +34,44 @@ class ManagementFeature(Feature):
     Feature containing the extension and bot control commands
     """
 
-    @Feature.Command(parent="jsk", name="load", aliases=["reload"])
+    @Feature.Command(parent="jsk", name="load", aliases=["reload", "fix"])
     async def jsk_load(self, ctx: ContextA, *extensions: ExtensionConverter):  # type: ignore
-        """
-        Loads or reloads the given extension names.
+       """
+       Loads or reloads the given extension names.
 
-        Reports any extensions that failed to load.
-        """
+       Reports any extensions that failed to load.
+       """
 
-        extensions: typing.Iterable[typing.List[str]] = extensions  # type: ignore
+       extensions: typing.Iterable[typing.List[str]] = extensions  # type: ignore
 
-        paginator = commands.Paginator(prefix='', suffix='')
+       paginator = commands.Paginator(prefix='', suffix='')
 
-        # 'jsk reload' on its own just reloads jishaku
-        if ctx.invoked_with == 'reload' and not extensions:
-            extensions = [['jishaku']]
+       # 'jsk reload' on its own just reloads jishaku
+       if ctx.invoked_with == 'reload' and not extensions:
+           extensions = [['jishaku']]
 
-        embed = discord.Embed(title="Extension Reload/Load Results", color=0x2b2d31)  
+       embed = discord.Embed(title="Extension Reload/Load Results", color=0x2b2d31)  
 
-        for extension in itertools.chain(*extensions):
-            method, icon = (
-                (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
-                if extension in self.bot.extensions else
-                (self.bot.load_extension, "\N{INBOX TRAY}")
-            )
+       for extension in itertools.chain(*extensions):
+           method, icon = (
+               (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
+               if extension in self.bot.extensions else
+               (self.bot.load_extension, "\N{INBOX TRAY}")
+           )
 
-            try:
-                await discord.utils.maybe_coroutine(method, extension)
-                embed.add_field(name=f"{icon} `{extension}`", value="Success", inline=False)
-            except Exception as exc:  # pylint: disable=broad-except
-                if isinstance(exc, commands.ExtensionFailed) and exc.__cause__:
-                    cause = exc.__cause__
-                    traceback_data = ''.join(traceback.format_exception(type(cause), cause, cause.__traceback__, 8))
-                else:
-                    traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 2))
+           try:
+               await discord.utils.maybe_coroutine(method, extension)
+               embed.description += f"{icon} `{extension}` was **loaded/reloaded**.\n"
+           except Exception as exc:  # pylint: disable=broad-except
+               if isinstance(exc, commands.ExtensionFailed) and exc.__cause__:
+                   cause = exc.__cause__
+                   traceback_data = ''.join(traceback.format_exception(type(cause), cause, cause.__traceback__, 8))
+               else:
+                   traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 2))
 
-                embed.add_field(
-                    name=f"{icon}\N{WARNING SIGN} `{extension}`",
-                    value=f"Failed\n```py\n{traceback_data}\n```",
-                    inline=False
-                )
+               embed.description += f"{icon}\N{WARNING SIGN} `{extension}` **failed to load/reload**.\n```py\n{traceback_data}\n```\n"
 
-        await ctx.send(embed=embed)
+       await ctx.send(embed=embed)
 
     @Feature.Command(parent="jsk", name="unload")
     async def jsk_unload(self, ctx: ContextA, *extensions: ExtensionConverter):  # type: ignore
@@ -90,20 +86,16 @@ class ManagementFeature(Feature):
         paginator = commands.Paginator(prefix='', suffix='')
         icon = "\N{OUTBOX TRAY}"
 
-        embed = discord.Embed(title="Extension Unload Results", color=0x2b2d31) 
+        embed = discord.Embed(color=0x2b2d31) 
 
         for extension in itertools.chain(*extensions):
             try:
                 await discord.utils.maybe_coroutine(self.bot.unload_extension, extension)
-                embed.add_field(name=f"{icon} `{extension}`", value="Success", inline=False)
+                embed.description += f"`> {extension}` was **unloaded**.\n"
             except Exception as exc:  # pylint: disable=broad-except
                 traceback_data = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__, 2))
 
-                embed.add_field(
-                    name=f"{icon}\N{WARNING SIGN} `{extension}`",
-                    value=f"Failed\n```py\n{traceback_data}\n```",
-                    inline=False
-                )
+                embed.description += f"> `{extension}` **failed to unload**.\n```py\n{traceback_data}\n```\n"
 
         await ctx.send(embed=embed)
 
