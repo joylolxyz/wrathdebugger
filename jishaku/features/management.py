@@ -50,7 +50,7 @@ class ManagementFeature(Feature):
        if ctx.invoked_with == 'reload' and not extensions:
            extensions = [['jishaku']]
 
-       embed = discord.Embed(title="Extension Reload/Load Results", color=0x2b2d31)  
+       embed = discord.Embed(color=0x2b2d31)  
 
        for extension in itertools.chain(*extensions):
            method, icon = (
@@ -140,7 +140,7 @@ class ManagementFeature(Feature):
 
         return await ctx.send(
             embed = discord.Embed(
-            description=f"> Link to invite this bot:\n<https://discordapp.com/oauth2/authorize?{urlencode(query, safe='+')}>",
+            description=f"> <https://discordapp.com/oauth2/authorize?{urlencode(query, safe='+')}>",
             color=0x2b2d31
         ))
 
