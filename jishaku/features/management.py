@@ -50,6 +50,8 @@ class ManagementFeature(Feature):
         if ctx.invoked_with == 'reload' and not extensions:
             extensions = [['jishaku']]
 
+        embed = discord.Embed(title="Extension Reload/Load Results", color=0x2b2d31)  
+
         for extension in itertools.chain(*extensions):
             method, icon = (
                 (self.bot.reload_extension, "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}")
@@ -59,6 +61,7 @@ class ManagementFeature(Feature):
 
             try:
                 await discord.utils.maybe_coroutine(method, extension)
+                embed.add_field(name=f"{icon} `{extension}`", value="Success", inline=False)
             except Exception as exc:  # pylint: disable=broad-except
                 if isinstance(exc, commands.ExtensionFailed) and exc.__cause__:
                     cause = exc.__cause__
@@ -66,15 +69,13 @@ class ManagementFeature(Feature):
                 else:
                     traceback_data = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__, 2))
 
-                paginator.add_line(
-                    f"{icon}\N{WARNING SIGN} `{extension}`\n```py\n{traceback_data}\n```",
-                    empty=True
+                embed.add_field(
+                    name=f"{icon}\N{WARNING SIGN} `{extension}`",
+                    value=f"Failed\n```py\n{traceback_data}\n```",
+                    inline=False
                 )
-            else:
-                paginator.add_line(f"{icon} `{extension}`", empty=True)
 
-        for page in paginator.pages:
-            await ctx.send(page)
+        await ctx.send(embed=embed)
 
     @Feature.Command(parent="jsk", name="unload")
     async def jsk_unload(self, ctx: ContextA, *extensions: ExtensionConverter):  # type: ignore
@@ -89,21 +90,22 @@ class ManagementFeature(Feature):
         paginator = commands.Paginator(prefix='', suffix='')
         icon = "\N{OUTBOX TRAY}"
 
+        embed = discord.Embed(title="Extension Unload Results", color=0x2b2d31) 
+
         for extension in itertools.chain(*extensions):
             try:
                 await discord.utils.maybe_coroutine(self.bot.unload_extension, extension)
+                embed.add_field(name=f"{icon} `{extension}`", value="Success", inline=False)
             except Exception as exc:  # pylint: disable=broad-except
                 traceback_data = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__, 2))
 
-                paginator.add_line(
-                    f"{icon}\N{WARNING SIGN} `{extension}`\n```py\n{traceback_data}\n```",
-                    empty=True
+                embed.add_field(
+                    name=f"{icon}\N{WARNING SIGN} `{extension}`",
+                    value=f"Failed\n```py\n{traceback_data}\n```",
+                    inline=False
                 )
-            else:
-                paginator.add_line(f"{icon} `{extension}`", empty=True)
 
-        for page in paginator.pages:
-            await ctx.send(page)
+        await ctx.send(embed=embed)
 
     @Feature.Command(parent="jsk", name="shutdown", aliases=["logout"])
     async def jsk_shutdown(self, ctx: ContextA):
@@ -113,7 +115,10 @@ class ManagementFeature(Feature):
 
         ellipse_character = "\N{BRAILLE PATTERN DOTS-356}" if Flags.USE_BRAILLE_J else "\N{HORIZONTAL ELLIPSIS}"
 
-        await ctx.send(f"Logging out now{ellipse_character}")
+        await ctx.send(embed = discord.Embed(
+            description=f"> Shutting down **wrath**{ellipse_character}",
+            color=0x2b2d31
+        ))
         await ctx.bot.close()
 
     @Feature.Command(parent="jsk", name="invite")
@@ -142,8 +147,10 @@ class ManagementFeature(Feature):
         }
 
         return await ctx.send(
-            f"Link to invite this bot:\n<https://discordapp.com/oauth2/authorize?{urlencode(query, safe='+')}>"
-        )
+            embed = discord.Embed(
+            description=f"> Link to invite this bot:\n<https://discordapp.com/oauth2/authorize?{urlencode(query, safe='+')}>",
+            color=0x2b2d31
+        ))
 
     @Feature.Command(parent="jsk", name="rtt", aliases=["ping"])
     async def jsk_rtt(self, ctx: ContextA):
